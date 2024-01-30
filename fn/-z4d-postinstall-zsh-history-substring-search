@@ -1,0 +1,5 @@
+#!/usr/bin/env zsh
+
+eval "$_z4d_opt"
+
+z4d compile -- $Z4D_PACKAGE_DIR/zsh-history-substring-search.zsh

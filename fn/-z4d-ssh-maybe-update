@@ -1,0 +1,18 @@
+#!/usr/bin/env zsh
+
+# Requires: [[ $Z4D_SSH == <1->:* ]]
+
+eval "$_z4d_opt"
+
+local min_version=${Z4D_SSH%%:*}
+
+local got_version
+got_version=${$(<$Z4D/zsh4doug/version)%$'\r'} &&
+  [[ $got_version == <-> ]]                      &&
+  (( got_version >= min_version ))               &&
+  return
+
+print -Pru2 -- "%F{3}z4d%f: %Binitiating update%b (cached version too old)"
+
+Z4D_SSH=0:${Z4D_SSH#*:}
+-z4d-cmd-update

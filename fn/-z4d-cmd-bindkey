@@ -1,0 +1,57 @@
+#!/usr/bin/env zsh
+
+eval "$_z4d_opt"
+
+zparseopts -D -F -- || return '_z4d_err()'
+
+if (( ARGC < 2 )); then
+  -z4d-help-bindkey >&2
+  return 1
+fi
+
+(( ${+_z4d_key} )) || return 0
+
+local kb seq seqs new_seqs
+
+for kb in ${@:2}; do
+  seqs=('')
+  for kb in ${(@s: :)kb}; do
+    if [[ -n ${seq::=$_z4d_key[$kb]} ]]; then
+      seqs=(${^seqs}$seq)
+    else
+      case $kb in
+        ?~[a-z])
+          seqs=(${^seqs}$kb ${^seqs}${(L)kb})
+        ;;
+        Ctrl+[A-Z'[]\'])
+          seqs=(${^seqs}'^'$kb[-1])
+        ;;
+        (Alt|Option)+[A-Z'[]\/.,'])
+          new_seqs=(${^seqs}'^['$kb[-1] ${^seqs}'^['${(L)kb[-1]})
+          if zstyle -T :z4d:bindkey macos-option-as-alt &&
+            [[ -n ${seq::=$_z4d_macos_opt_key[$kb[-1]]} ]]; then
+            new_seqs+=(${^seqs}$seq)
+            if [[ -n ${seq::=$_z4d_macos_opt_key[${(L)kb[-1]}]} ]]; then
+              new_seqs+=(${^seqs}$seq)
+            fi
+          fi
+          seqs=($new_seqs)
+        ;;
+        Ctrl+(Alt|Option)+[A-Z'[]\'])
+          seqs=(${^seqs}'^[^'$kb[-1])
+        ;;
+        Enter)
+          seqs=(${^seqs}'^M')
+        ;;
+        *)
+          print -Pru2 -- '%F{3}z4d%f: invalid key binding: %F{1}'${kb//\%/%%}'%f'
+          return '_z4d_err()'
+        ;;
+      esac
+    fi
+  done
+done
+
+for seq in ${(u)seqs}; do
+  builtin bindkey -- $seq $1
+done

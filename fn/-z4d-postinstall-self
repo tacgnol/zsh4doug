@@ -1,0 +1,14 @@
+#!/usr/bin/env zsh
+
+z4d compile -- $Z4D/zsh4doug/{main.zsh,sc/exec-zsh-i,fn/(|-|_)z4d[^.]#~*.zwc} $Z4D/z4d.zsh || return
+
+[[ -v functions[compinit] ]] && unfunction compinit
+autoload -Uz +X compinit || return
+local orig="bindkey '^i' | IFS=\$' \t' read -A _i_line"
+local replacement="_i_line=( '\"^I\"' z4d-fzf-complete )"
+print -r -- ${functions[compinit]/$orig/$replacement} >$Z4D/zsh4doug/fn/tmp.$$.compinit || return
+zf_mv -- $Z4D/zsh4doug/fn/tmp.$$.compinit $Z4D/zsh4doug/fn/-z4d-compinit-impl || return
+z4d compile -- $Z4D/zsh4doug/fn/-z4d-compinit-impl || return
+autoload -Uz -- -z4d-compinit-impl
+
+function compinit() {}

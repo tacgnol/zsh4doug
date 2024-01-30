@@ -1,0 +1,7 @@
+#!/usr/bin/env zsh
+
+eval "$_z4d_opt"
+
+local term
+zstyle -s :z4d:sudo term term || term=${TERM:/tmux-256color/screen-256color}
+TERM=${term:-$TERM} command sudo "$@"

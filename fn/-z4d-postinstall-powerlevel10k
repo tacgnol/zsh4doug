@@ -1,0 +1,21 @@
+#!/usr/bin/env zsh
+
+eval "$_z4d_opt"
+
+zf_mkdir -p -- $Z4D/cache/powerlevel10k/p10k-root || return
+
+if [[ $GITSTATUS_AUTO_INSTALL != 0 ]]; then
+  if [[ -e $Z4D/.updating ]]; then
+    print -ru2 -- ${(%):-"%F{3}z4d%f: updating %Bgitstatus%b binary"}
+  else
+    print -ru2 -- ${(%):-"%F{3}z4d%f: fetching %Bgitstatus%b binary"}
+  fi
+
+  (
+    unset -m 'GITSTATUS_*~GITSTATUS_CACHE_DIR'
+    export GITSTATUS_CACHE_DIR=$GITSTATUS_CACHE_DIR
+    $Z4D_PACKAGE_DIR/gitstatus/install -f
+  ) || return
+fi
+
+z4d compile -- $Z4D_PACKAGE_DIR/{*.zsh-theme,internal/*.zsh,gitstatus/*.zsh,gitstatus/install}(N)

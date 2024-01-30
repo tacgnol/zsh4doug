@@ -1,0 +1,135 @@
+#!/usr/bin/env zsh
+
+local url postinstall command
+
+if [[ $1 == */* ]]; then
+  if [[ $1 == *@* ]]; then
+    url=https://github.com/${1%%@*}/archive/${1#*@}.tar.gz
+    1=${1%%@*}
+  else
+    url=https://github.com/$1/archive/master.tar.gz
+  fi
+  if ! zstyle -s :z4d:$1 postinstall postinstall; then
+    if [[ $1 == ohmyzsh/ohmyzsh ]]; then
+      postinstall=-z4d-postinstall-ohmyzsh
+    else
+      postinstall=
+    fi
+  fi
+else
+  local -a channel
+  zstyle -a :z4d:$1 channel channel || channel=(stable)
+  local tmux_cmd='sh -- '${(q)Z4D}/zsh4doug/sc/install-tmux' -d "${Z4D_PACKAGE_DIR}" -q'
+  tmux_cmd+=' && print -r -- "$EPOCHREALTIME" >"${Z4D_PACKAGE_DIR}"/stamp'
+  local brew_cmd='command brew tap --quiet homebrew/command-not-found && zf_mkdir -- "${Z4D_PACKAGE_DIR}"'
+  case $#channel-$channel[1] in
+    2-command) command=$channel[2];;
+    1-stable|1-testing)
+      case $1 in
+        tmux)                       command=$tmux_cmd;;
+        homebrew-command-not-found) command=$brew_cmd;;
+        terminfo)                   url=https://github.com/romkatv/terminfo/archive/v1.2.0.tar.gz;;
+        *)                          url=https://github.com/tacgnol/$1/archive/z4d-$channel[1].tar.gz;;
+      esac
+    ;;
+    1-dev)
+      case $1 in
+        fzf)                          url=https://github.com/junegunn/$1/archive/master.tar.gz;;
+        powerlevel10k)                url=https://github.com/romkatv/$1/archive/master.tar.gz;;
+        systemd)                      url=https://github.com/systemd/$1/archive/master.tar.gz;;
+        zsh-completions)              url=https://github.com/zsh-users/$1/archive/master.tar.gz;;
+        zsh-autosuggestions)          url=https://github.com/zsh-users/$1/archive/master.tar.gz;;
+        zsh-syntax-highlighting)      url=https://github.com/zsh-users/$1/archive/master.tar.gz;;
+        zsh-history-substring-search) url=https://github.com/zsh-users/$1/archive/master.tar.gz;;
+        terminfo)                     url=https://github.com/romkatv/terminfo/archive/v1.2.0.tar.gz;;
+        tmux)                         command=$tmux_cmd;;
+        homebrew-command-not-found)   command=$brew_cmd;;
+        *)
+          print -Pru2 -- "%F{3}z4d%f: %F{1}internal error%f: unknown package: ${1//\%/%%}"
+          return 1
+        ;;
+      esac
+    ;;
+    1-none)
+      zf_mkdir -p -- $Z4D/$1 || return
+      return
+    ;;
+    *)
+      print -Pru2 -- '%F{3}z4d%f: invalid zstyle'
+      print -Pru2 -- ''
+      print -Pru2 -- "  %F{2}zstyle%f :z4d:${(q)1//\%/%%} channel %F{1}${(j: :)${(@q)channel//\%/%%}}%f"
+      print -Pru2 -- ''
+      print -Pru2 -- 'Supported values: %Bstable%b, %Btesting%b and %Bdev%b.'
+      return 1
+    ;;
+  esac
+  (( $+functions[-z4d-postinstall-$1] )) && postinstall=-z4d-postinstall-$1
+fi
+
+local suf
+[[ $1 == systemd ]] && suf=' completions'
+
+if [[ -e $Z4D/.updating ]]; then
+  print -Pru2 -- "%F{3}z4d%f: updating %B${1//\%/%%}%b$suf"
+else
+  print -Pru2 -- "%F{3}z4d%f: installing %B${1//\%/%%}%b$suf"
+fi
+
+local dst=$Z4D/$1
+
+zf_mkdir -p -- ${dst:h} 2>/dev/null || zf_mkdir -p -- ${dst:h} || return
+
+local old new
+
+{
+  if (( $+commands[mktemp] )); then
+    old="$(command mktemp -d -- $dst.old.XXXXXXXXXX)" || return
+    new="$(command mktemp -d -- $dst.new.XXXXXXXXXX)" || return
+  else
+    old=$dst.old.$$
+    new=$dst.new.$$
+    zf_rm -rf -- $old $new   || return
+    zf_mkdir -p -- $old $new || return
+  fi
+
+  local Z4D_PACKAGE_NAME=$1 Z4D_PACKAGE_DIR=$new/${1:t}
+
+  if [[ -n $command ]]; then
+    () { eval $command } || return 1
+    if [[ ! -d $Z4D_PACKAGE_DIR ]]; then
+      print -Pru2 -- "%F{3}z4d%f: custom command failed to install: %F{1}${Z4D_PACKAGE_DIR//\%/%%}%f"
+      return 1
+    fi
+  else
+    local err
+    if (( $+commands[curl] )); then
+      err="$(command curl -fsSL -- $url 2>&1 >$new/snapshot.tar.gz)"
+    elif (( $+commands[wget] )); then
+      err="$(command wget -O-   -- $url 2>&1 >$new/snapshot.tar.gz)"
+    else
+      print -Pru2 -- "%F{3}z4d%f: please install %F{1}curl%f or %F{1}wget%f"
+      return 1
+    fi
+    if (( $? )); then
+      print -ru2 -- $err
+      print -Pru2 -- "%F{3}z4d%f: failed to download %F{1}${url//\%/%%}%f"
+      return 1
+    fi
+    command tar -C $new -xzf $new/snapshot.tar.gz || return
+    local dirs=($new/${1:t}-*(N/))
+    if (( $#dirs != 1 )); then
+      print -Pru2 -- "%F{3}z4d%f: invalid content: %F{1}${url//\%/%%}%f"
+      return 1
+    fi
+    if [[ $dirs[1] != $new/${1:t} ]]; then
+      -z4d-mv $dirs[1] $new/${1:t} || return
+    fi
+  fi
+
+  eval $postinstall || return
+
+  [[ ! -e $dst ]] || -z4d-mv $dst $old/${1:t} 2>/dev/null || zf_rm -rf -- $dst || return
+  -z4d-mv $new/${1:t} $dst || return
+} always {
+  [[ -z $old && -z $new ]] || zf_rm -rf -- $old $new
+}

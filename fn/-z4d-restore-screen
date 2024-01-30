@@ -1,0 +1,14 @@
+#!/usr/bin/env zsh
+
+eval "$_z4d_opt"
+
+[[ -v _z4d_tty_fd ]] || return
+
+if [[ -n $_Z4D_TMUX ]]; then
+  (( ${+_z4d_saved_screen} )) || return
+  print -rnu $_z4d_tty_fd -- "$_z4d_saved_screen"
+elif [[ -n $Z4D_SSH && -n $_Z4D_SSH_MARKER ]]; then
+  printf '\001z4d.%s%s' "$_Z4D_SSH_MARKER" 'restore-screen  ' >&$_z4d_tty_fd
+else
+  return 1
+fi
