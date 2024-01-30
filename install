@@ -292,7 +292,7 @@ else
   z4d="$HOME"/.z4d.tmp."$$"
 fi
 
-url='https://raw.githubusercontent.com/tacgnol/zsh4doug/master'
+url='git@raw.githubusercontent.com/tacgnol/zsh4doug/v1'
 
 >&2 'printf' '\n'
 >&2 'printf' 'Settings up \033[33mZsh For Humans\033[0m...\n'
@@ -337,7 +337,7 @@ if '[' '-r' '/proc/version' ']' && 'command' 'grep' '-q' '[Mm]icrosoft' '/proc/v
   'command' 'mv' '--' "$zshrc.bak" "$zshrc"
 fi
 
-Z4D="${XDG_CACHE_HOME:-$HOME/.cache}/zsh4doug/master"
+Z4D="${XDG_CACHE_HOME:-$HOME/.cache}/zsh4doug/v1"
 
 'umask' 'o-w'
 
