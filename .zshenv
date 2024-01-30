@@ -1,4 +1,4 @@
-# Documentation: https://github.com/tacgnol/zsh4doug/blob/master/README.md.
+# Documentation: https://github.com/tacgnol/zsh4doug/blob/v1/README.md.
 #
 # Do not modify this file unless you know exactly what you are doing.
 # It is strongly recommended to keep all shell customization and configuration
@@ -21,8 +21,8 @@ if [ -n "${ZSH_VERSION-}" ]; then
   unset Z4D_BOOTSTRAPPING
 fi
 
-Z4D_URL="https://raw.githubusercontent.com/tacgnol/zsh4doug/master"
-: "${Z4D:=${XDG_CACHE_HOME:-$HOME/.cache}/zsh4doug/master}"
+Z4D_URL="https://raw.githubusercontent.com/tacgnol/zsh4doug/v1"
+: "${Z4D:=${XDG_CACHE_HOME:-$HOME/.cache}/zsh4doug/v1}"
 
 umask o-w
 
