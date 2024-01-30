@@ -26,7 +26,7 @@ case "$platform" in
 esac
 
 if command -v 'curl' >'/dev/null' 2>&1; then
-  fetch='command curl -H "Authorization: token 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" -H "Accept: application/vnd.github.v3.raw" -fsSLo'
+  fetch='command curl -fsSLo'
 elif command -v 'wget' >'/dev/null' 2>&1; then
   fetch='command wget -O'
 else
