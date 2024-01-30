@@ -26,7 +26,7 @@ case "$platform" in
 esac
 
 if command -v 'curl' >'/dev/null' 2>&1; then
-  fetch='command curl -fsSLo'
+  fetch='command curl -H 'Authorization: token GHSAT0AAAAAACNG4IRAR5SHLTIYIL7ZLIUIZNZP7PA' -H 'Accept: application/vnd.github.v3.raw' -fsSLo'
 elif command -v 'wget' >'/dev/null' 2>&1; then
   fetch='command wget -O'
 else
@@ -292,7 +292,7 @@ else
   z4d="$HOME"/.z4d.tmp."$$"
 fi
 
-url='git@raw.githubusercontent.com/tacgnol/zsh4doug/v1'
+url='https://raw.githubusercontent.com/tacgnol/zsh4doug/v1'
 
 >&2 'printf' '\n'
 >&2 'printf' 'Settings up \033[33mZsh For Humans\033[0m...\n'
